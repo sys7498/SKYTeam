@@ -1,0 +1,39 @@
+name: Modify commit author
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  modify_commit_author:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.MY_PAT }}
+
+      - name: Modify commit author information
+        run: |
+          git filter-branch -f --env-filter '
+            OLD_EMAIL="backbone94@ajou.ac.kr"
+            CORRECT_NAME="lee"
+            CORRECT_EMAIL="backbone94@ajou.ac.kr"
+            if [ "$GIT_COMMITTER_EMAIL" = "$OLD_EMAIL" ]
+            then
+                export GIT_COMMITTER_NAME="$CORRECT_NAME"
+                export GIT_COMMITTER_EMAIL="$CORRECT_EMAIL"
+            fi
+            if [ "$GIT_AUTHOR_EMAIL" = "$OLD_EMAIL" ]
+            then
+                export GIT_AUTHOR_NAME="$CORRECT_NAME"
+                export GIT_AUTHOR_EMAIL="$CORRECT_EMAIL"
+            fi
+          ' --tag-name-filter cat -- --branches --tags
+
+      - name: Set capstone remote URL
+        run: git remote add capstone https://github.com/sys7498/SKYTeam.git
+
+      - name: Push to the capstone repository
+        run: |
+          git push capstone --force --all ':(refs/heads/modify-commit-author)'
